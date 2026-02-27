@@ -1,1 +1,1 @@
-# Book-Management-System
+# Система управления книгами
