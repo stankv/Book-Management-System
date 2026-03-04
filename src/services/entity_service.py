@@ -25,32 +25,38 @@ class EntityService(BaseService):
             self._entities_data[entity.id] = entity
             log.info("Recovered %d entities from storage", len(self._entities_data))
 
+    def _save_entities(self):
+        data = [asdict(entity) for entity in self.entities]
+        self.storage.save_data(data)
+
+    @property
+    def entities_data(self):
+        if not self._entities_data:
+            self._load_entities()
+        return self._entities_data
+
     @property
     def entities(self):
         if not self._entities_data:
             self._load_entities()
         return list(self._entities_data.values())
 
-    def _save_entities(self):
-        data = [asdict(entity) for entity in self.entities]
-        self.storage.save_data(data)
-
     def get_all(self):
         return self.entities
 
     def get_by_id(self, id):
-        return self._entities_data.get(id)
+        return self.entities_data.get(id)
 
     def add(self, item):
-        self._entities_data[item.id] = item
+        self.entities_data[item.id] = item
         self._save_entities()
         log.info("Added %s %s: %s", self.entity_type.__name__, item.id, item)
         return item
 
     def delete(self, id):
-        if id not in self._entities_data:
+        if id not in self.entities_data:
             log.warning("No %s found with id %s", self.entity_type.__name__, id)
             return
-        self._entities_data.pop(id)
+        self.entities_data.pop(id)
         self._save_entities()
         log.info("Deleted %s %s", self.entity_type.__name__, id)
