@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from src.actions.base_action import Action, ActionResult
+from src.actions import Action, ActionResult, ExitAction
 from src.managers.base_manager import BaseManager
 from src.models.book import Book
 from src.services.entity_service import EntityService
@@ -24,7 +24,7 @@ class BookManager(BaseManager):
 
     actions: ClassVar[tuple[type[Action], ...]] = (
         ExampleAction,
-        # TODO: exit action
+        ExitAction,
     )
 
     def __init__(self, data_dir: Path):
@@ -46,8 +46,8 @@ class BookManager(BaseManager):
             self.prepared_actions[name] = action
 
     def _display_menu(self):
-        print("Book Manager menu:")
-        print("Choose an option: (WIP)")
+        print("\nBook Manager menu:")
+        print("Choose an option: ")
         for idx, action in enumerate(self.prepared_actions.values(), start=1):
             print(f"{idx}. [{action.get_name()}] >> {action.get_description()}")
 
@@ -58,10 +58,25 @@ class BookManager(BaseManager):
         while self.running:
             self._display_menu()
 
-            # option = input("Choose an option (WIP): ")
+            choice = input("Name the action or choose number: ")
+            if choice.isdigit():
+                index = int(choice) - 1
+                if index < 0 or index >= len(self.prepared_actions):
+                    print("Invalid choice number, please try again")
+                    continue
+                try:
+                    action = list(self.prepared_actions.values())[int(choice) - 1]
+                except IndexError:
+                    print("Invalid choice index, please try again")
+                    continue
+            else:
+                try:
+                    action = self.prepared_actions[choice]
+                except KeyError:
+                    print("Invalid choice name, please try again")
+                    continue
 
-            #action: Action = Action(self.books_service)
-            result: ActionResult = ActionResult(stop=True)
+            result: ActionResult = action.execute()
             if result.stop:
                 print("\nStop running Book Manager")
                 self.running = False
