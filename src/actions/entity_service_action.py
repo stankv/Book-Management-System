@@ -18,5 +18,5 @@ class EntityServiceAction(Action, ABC):
     def editable_entity_fields_names(self) -> list[str]:
         return [name
             for name in self.service.entity_type.__dataclass_fields__
-            if name not  in self.not_editable_fields
+            if name not in self.not_editable_fields
         ]

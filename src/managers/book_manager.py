@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import ClassVar
 
-from src.actions import Action, ActionResult, ExitAction
+from src.actions import Action, ActionResult, ExitAction, ListEntitiesAction
 from src.managers.base_manager import BaseManager
 from src.models.book import Book
 from src.services.entity_service import EntityService
@@ -24,6 +24,7 @@ class BookManager(BaseManager):
 
     actions: ClassVar[tuple[type[Action], ...]] = (
         ExampleAction,
+        ListEntitiesAction,
         ExitAction,
     )
 
