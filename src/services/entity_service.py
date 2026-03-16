@@ -113,3 +113,46 @@ class EntityService(BaseService):
         log.info("Search for %s with criteria %s found %d results",
                  self.entity_type.__name__, kwargs, len(results))
         return results
+
+    def update(self, id, **kwargs):
+        """
+        Update entity fields by ID.
+
+        Args:
+            id: UUID of the entity to update
+            **kwargs: Field names and new values to update
+
+        Returns:
+            Updated entity or None if not found
+        """
+        entity = self.get_by_id(id)
+        if not entity:
+            log.warning("No %s found with id %s", self.entity_type.__name__, id)
+            return None
+
+        # Track if any changes were made
+        changes_made = False
+
+        # Update only provided fields
+        for field, value in kwargs.items():
+            if hasattr(entity, field):
+                current_value = getattr(entity, field)
+
+                # Only update if value is different
+                if value != current_value:
+                    setattr(entity, field, value)
+                    changes_made = True
+                    log.debug("Updated %s.%s from %s to %s",
+                              self.entity_type.__name__, field, current_value, value)
+            else:
+                log.warning("Field %s does not exist in %s",
+                            field, self.entity_type.__name__)
+
+        if changes_made:
+            # Save changes to storage
+            self._save_entities()
+            log.info("Updated %s %s", self.entity_type.__name__, id)
+        else:
+            log.info("No changes made to %s %s", self.entity_type.__name__, id)
+
+        return entity

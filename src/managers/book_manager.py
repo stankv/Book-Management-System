@@ -6,6 +6,7 @@ from src.actions import (
     Action,
     ActionResult,
     AddEntityAction,
+    UpdateEntityAction,
     DeleteEntityAction,
     ExitAction,
     ListEntitiesAction,
@@ -25,6 +26,7 @@ class BookManager(BaseManager):
         ListEntitiesAction,
         SearchEntityAction,
         AddEntityAction,
+        UpdateEntityAction,
         DeleteEntityAction,
         ExitAction,
     )

@@ -23,3 +23,7 @@ class BaseService(ABC):
         """Search entities by various criteria"""
         pass
 
+    @abstractmethod
+    def update(self, id, **kwargs):
+        """Update entity fields by ID"""
+        pass
