@@ -9,6 +9,7 @@ from src.actions import (
     DeleteEntityAction,
     ExitAction,
     ListEntitiesAction,
+    SearchEntityAction,
 )
 from src.managers.base_manager import BaseManager
 from src.models.book import Book
@@ -22,6 +23,7 @@ class BookManager(BaseManager):
 
     actions: ClassVar[tuple[type[Action], ...]] = (
         ListEntitiesAction,
+        SearchEntityAction,
         AddEntityAction,
         DeleteEntityAction,
         ExitAction,
