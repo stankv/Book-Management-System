@@ -35,7 +35,7 @@ class DeleteEntityAction(EntityServiceAction):
         if confirm.casefold() != "y":
             log.warning("Deletion aborted")
             print("\nCancelled\n")
-            return ActionResult
+            return ActionResult()
 
         self.service.delete(entity.id)
         print(f"Deleted entity {entity_id}\n")

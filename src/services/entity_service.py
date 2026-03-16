@@ -23,7 +23,7 @@ class EntityService(BaseService):
             entity_data["id"] = UUID(entity_data["id"])
             entity = self.entity_type(**entity_data)
             self._entities_data[entity.id] = entity
-            log.info("Recovered %d entities from storage", len(self._entities_data))
+        log.info("Recovered %d entities from storage", len(self._entities_data))
 
     def _save_entities(self):
         data = [asdict(entity) for entity in self.entities]
