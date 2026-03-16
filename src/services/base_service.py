@@ -17,3 +17,9 @@ class BaseService(ABC):
     @abstractmethod
     def delete(self, id):
         pass
+
+    @abstractmethod
+    def search(self, **kwargs):
+        """Search entities by various criteria"""
+        pass
+

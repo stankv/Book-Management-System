@@ -60,3 +60,56 @@ class EntityService(BaseService):
         self.entities_data.pop(id)
         self._save_entities()
         log.info("Deleted %s %s", self.entity_type.__name__, id)
+
+    def search(self, **kwargs):
+        """
+        Search entities by various criteria.
+
+        Args:
+            **kwargs: Field names and values to search for.
+                     Examples:
+                     - search(id=some_uuid)  # some_uuid должен быть UUID объектом
+                     - search(title="Python")
+                     - search(author="Smith", year=2020)
+
+        Returns:
+            List of matching entities
+        """
+        if not self.entities:
+            log.warning("No entities found in storage")
+            return []
+
+        results = []
+        for entity in self.entities:
+            match = True
+            for field, value in kwargs.items():
+                if value is None or (isinstance(value, str) and not value.strip()):
+                    continue
+
+                entity_value = getattr(entity, field, None)
+                if entity_value is None:
+                    match = False
+                    break
+
+                # Для UUID объектов сравниваем напрямую (они должны быть равны)
+                if isinstance(entity_value, UUID) and isinstance(value, UUID):
+                    if entity_value != value:
+                        match = False
+                        break
+                # Case-insensitive string comparison for text fields
+                elif isinstance(entity_value, str) and isinstance(value, str):
+                    if value.lower() not in entity_value.lower():
+                        match = False
+                        break
+                # Exact match for other types (int, etc.)
+                else:
+                    if entity_value != value:
+                        match = False
+                        break
+
+            if match:
+                results.append(entity)
+
+        log.info("Search for %s with criteria %s found %d results",
+                 self.entity_type.__name__, kwargs, len(results))
+        return results

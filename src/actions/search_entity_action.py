@@ -1,5 +1,4 @@
 import logging
-
 from uuid import UUID
 
 from src.actions import ActionResult
@@ -15,37 +14,8 @@ class SearchEntityAction(EntityServiceAction):
     def get_description(self) -> str:
         return f"Search for {self.entity_name} by id, title, author, or ISBN"
 
-    def _search_by_id(self, search_term: str) -> list:
-        """Search by UUID (exact match, unique)"""
-        try:
-            uuid_id = UUID(search_term)
-            entity = self.service.get_by_id(uuid_id)
-            return [entity] if entity else []
-        except ValueError:
-            return []
-
-    def _search_by_isbn(self, search_term: str, entities: list) -> list:
-        """Search by ISBN (case-insensitive exact match, unique)"""
-        if not search_term:
-            return []
-        return [e for e in entities if e.isbn.lower() == search_term.lower()]
-
-    def _search_by_title(self, search_term: str, entities: list) -> list:
-        """Search by title (case-insensitive substring match)"""
-        if not search_term:
-            return []
-        search_term_lower = search_term.lower()
-        return [e for e in entities if search_term_lower in e.title.lower()]
-
-    def _search_by_author(self, search_term: str, entities: list) -> list:
-        """Search by author (case-insensitive substring match)"""
-        if not search_term:
-            return []
-        search_term_lower = search_term.lower()
-        return [e for e in entities if search_term_lower in e.author.lower()]
-
-    def _get_search_criteria(self) -> tuple[str, str] | None:
-        """Display search menu and return (criteria_type, search_term)"""
+    def _get_search_criteria(self) -> dict | None:
+        """Display search menu and return search criteria dict"""
         print("\nSearch by:")
         print("  1. ID (UUID)")
         print("  2. Title")
@@ -54,58 +24,67 @@ class SearchEntityAction(EntityServiceAction):
 
         choice = input("Select search criteria (1-4): ").strip()
 
-        criteria_map = {
-            "1": "id",
-            "2": "title",
-            "3": "author",
-            "4": "isbn"
-        }
+        if choice == "1":
+            criteria = "id"
+            search_term = input("Enter ID (UUID) to search for: ").strip()
+            if not search_term:
+                print("No ID provided. Search cancelled.")
+                return None
 
-        if choice not in criteria_map:
+            # Validate UUID format and convert to UUID object
+            try:
+                uuid_obj = UUID(search_term)
+                return {"id": uuid_obj}  # <-- Передаем UUID объект, а не строку
+            except ValueError:
+                print(f"Invalid UUID format: {search_term}")
+                return None
+
+        elif choice == "2":
+            search_term = input("Enter title to search for: ").strip()
+            if not search_term:
+                print("No title provided. Search cancelled.")
+                return None
+            return {"title": search_term}
+
+        elif choice == "3":
+            search_term = input("Enter author to search for: ").strip()
+            if not search_term:
+                print("No author provided. Search cancelled.")
+                return None
+            return {"author": search_term}
+
+        elif choice == "4":
+            search_term = input("Enter ISBN to search for: ").strip()
+            if not search_term:
+                print("No ISBN provided. Search cancelled.")
+                return None
+            return {"isbn": search_term}
+
+        else:
             print("Invalid choice. Please select 1-4.")
             return None
-
-        criteria = criteria_map[choice]
-
-        search_term = input(f"Enter {criteria} to search for: ").strip()
-        if not search_term:
-            print(f"No {criteria} provided. Search cancelled.")
-            return None
-
-        return criteria, search_term
 
     def execute(self) -> ActionResult:
         print(f"\nSearch {self.entity_name}")
 
-        # Получаем критерии поиска
-        criteria_result = self._get_search_criteria()
-        if not criteria_result:
+        # Get search criteria from user
+        criteria = self._get_search_criteria()
+        if not criteria:
             return ActionResult()
 
-        criteria, search_term = criteria_result
+        # Perform search using service
+        results = self.service.search(**criteria)
 
-        # Получаем все книги для поиска (кроме поиска по ID, где используем get_by_id)
-        all_entities = self.service.get_all()
-
-        if not all_entities:
-            print("No entities found in storage")
-            return ActionResult()
-
-        # Выполняем поиск по выбранному критерию
-        results = []
-        if criteria == "id":
-            results = self._search_by_id(search_term)
-        else:
-            if criteria == "isbn":
-                results = self._search_by_isbn(search_term, all_entities)
-            elif criteria == "title":
-                results = self._search_by_title(search_term, all_entities)
-            elif criteria == "author":
-                results = self._search_by_author(search_term, all_entities)
-
-        # Выводим результаты
+        # Display results
         if not results:
-            print(f"No {self.entity_name} found matching {criteria} '{search_term}'")
+            field, value = list(criteria.items())[0]
+            # Для красивого отображения UUID в сообщении
+            display_value = str(value) if isinstance(value, UUID) else value
+            print(f"No {self.entity_name} found matching {field} '{display_value}'")
+
+            # Special message if no entities at all
+            if not self.service.get_all():
+                print("No entities found in storage")
         else:
             print(f"\nFound {len(results)} {self.entity_name}(s):")
             for entity in results:
