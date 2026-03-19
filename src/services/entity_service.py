@@ -297,6 +297,7 @@ class EntityService(BaseService):
         Logs:
             - Debug: For each updated field.
             - Info: When entity is updated or no changes were made."""
+
         entity = self.get_by_id(id)  # Will raise EntityNotFoundError if not found
 
         changes_made = False
@@ -310,17 +311,28 @@ class EntityService(BaseService):
             try:
                 current_value = getattr(entity, field)
 
-                # Only update if value is different
+                # Checking if it is safe to compare values
                 try:
-                    if value != current_value:
+                    # Trying to compare values
+                    values_are_different = (value != current_value)
+                except Exception as e:
+                    # If the comparison fails (different types, not supported, etc.),
+                    # we believe that the values are different and need to be updated, but we log the warning
+                    log.warning("Could not compare values for field %s: %s. Will update anyway.", field, e)
+                    values_are_different = True
+
+                if values_are_different:
+                    try:
                         setattr(entity, field, value)
                         changes_made = True
                         log.debug("Updated %s.%s", self.entity_type.__name__, field)
-                except Exception as e:
-                    log.warning("Could not compare values for %s: %s", field, e)
-                    # If comparison fails, try to update anyway
-                    setattr(entity, field, value)
-                    changes_made = True
+                    except Exception as e:
+                        log.error("Failed to set field %s: %s", field, e)
+                        raise EntityValidationError(
+                            self.entity_type.__name__,
+                            field,
+                            f"Cannot set value: {e}"
+                        ) from e
 
             except Exception as e:
                 log.error("Failed to update field %s: %s", field, e)
