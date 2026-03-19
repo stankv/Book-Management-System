@@ -153,7 +153,7 @@ class AddEntityAction(EntityServiceAction):
             for field, value in new_data.items():
                 print(f"  {field}: {value}")
 
-            confirm = input("\nDo you want to save the book? (y/n): ").strip()
+            confirm = input(f"\nDo you want to save the {self.entity_name}? (y/n): ").strip()
             if confirm.lower() != 'y':
                 raise ActionCancelledError("Add cancelled by user")
 

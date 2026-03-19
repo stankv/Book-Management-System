@@ -43,7 +43,7 @@ class ListEntitiesAction(EntityServiceAction):
             entities = self.service.get_all()
 
             if not entities:
-                print("📭 No books in the storage")
+                print(f"📭 No {self.entity_name}s in the storage")
             else:
                 for entity in entities:
                     print(f"  - [{entity.id}] {entity}")

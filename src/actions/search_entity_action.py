@@ -141,7 +141,7 @@ class SearchEntityAction(EntityServiceAction):
                 # Check if any entities exist at all
                 try:
                     if not self.service.get_all():
-                        print("📭 No Books in the storage")
+                        print(f"📭 No {self.entity_name}s in the storage")
                 except Exception as e:
                     log.warning("Could not check all entities: %s", e)
             else:
