@@ -6,10 +6,9 @@ from src.exceptions import (
     StorageWriteError,
     ActionCancelledError,
     BookValidationError,
-    BookYearError,
-    BookISBNError,
 )
-from src.settings import MIN_PUBLICATION_YEAR, MAX_PUBLICATION_YEAR, ISBN_VALID_LENGTHS
+from src.services.validation_service import ValidationService
+from src.settings import REQUIRED_FIELDS
 
 
 class AddEntityAction(EntityServiceAction):
@@ -35,31 +34,35 @@ class AddEntityAction(EntityServiceAction):
 
         return f"Add a new {self.entity_name} to storage"
 
-    def _validate_field(self, field_name: str, value: str) -> tuple[bool, any]:
-        """Validate and convert a field value based on its type.
-
-        Performs type conversion and additional business validation
-        for specific fields like year and ISBN.
+    def _validate_field(self, field_name: str, value: str, is_required: bool = False) -> tuple[bool, any]:
+        """
+        Validate and convert a field value based on its type.
 
         Args:
             field_name: Name of the field to validate.
             value: String input from the user.
+            is_required: Whether the field is required.
 
         Returns:
-            tuple[bool, any]: (success, converted_value) where success indicates
-                              whether validation passed and converted_value is the
-                              type-converted value.
+            tuple[bool, any]: (success, converted_value)
 
         Raises:
             BookValidationError: For specific book validation failures.
-            EntityValidationError: For general entity validation issues."""
-
+            EntityValidationError: For general entity validation issues.
+        """
         try:
-            field_type = self.service.entity_type.__dataclass_fields__[field_name].type
+            # Check required fields
+            if is_required and not value:
+                raise BookValidationError(
+                    field_name,
+                    f"{field_name} cannot be empty"
+                )
 
             # Empty value is allowed for optional fields
             if not value:
                 return True, None
+
+            field_type = self.service.entity_type.__dataclass_fields__[field_name].type
 
             # Type conversion with specific validations
             try:
@@ -67,10 +70,7 @@ class AddEntityAction(EntityServiceAction):
                     int_value = int(value)
                     # Additional validation for year field
                     if field_name == "year":
-                        current_year = MAX_PUBLICATION_YEAR
-                        if int_value < MIN_PUBLICATION_YEAR or int_value > current_year:
-                            raise BookYearError(int_value,
-                                                f"The year must be between {MIN_PUBLICATION_YEAR} and {MAX_PUBLICATION_YEAR}")
+                        ValidationService.validate_year(int_value, field_name, for_update=False)
                     return True, int_value
 
                 elif field_type == float:
@@ -82,10 +82,7 @@ class AddEntityAction(EntityServiceAction):
                 else:  # str and others
                     # Additional validation for ISBN
                     if field_name == "isbn" and value:
-                        # Simple ISBN validation (can be complicated if necessary)
-                        isbn_clean = value.replace('-', '').replace(' ', '')
-                        if not isbn_clean.isdigit() or len(isbn_clean) not in ISBN_VALID_LENGTHS:
-                            raise BookISBNError(value, "ISBN must be 10 or 13 digits!")
+                        ValidationService.validate_isbn(value, field_name)
                     return True, value
 
             except ValueError as e:
@@ -122,24 +119,33 @@ class AddEntityAction(EntityServiceAction):
         try:
             new_data = {}
 
+            # Get required fields for this entity type
+            required_fields = REQUIRED_FIELDS.get(self.entity_name, [])
+
             # Collect and validate input
             for field_name in self.editable_entity_fields_names():
+                is_required = field_name in required_fields
+
                 while True:
                     try:
-                        value = input(f"{field_name}: ").strip()
+                        prompt = f"{field_name}"
+                        if is_required:
+                            prompt += " (required)"
+                        prompt += ": "
+
+                        value = input(prompt).strip()
 
                         # Allow user to cancel
                         if value.lower() == 'cancel':
                             raise ActionCancelledError("Add cancelled by user")
 
-                        valid, converted_value = self._validate_field(field_name, value)
+                        valid, converted_value = self._validate_field(
+                            field_name, value, is_required
+                        )
 
                         if valid:
                             new_data[field_name] = converted_value
                             break
-                        else:
-                            # This shouldn't happen with current validation logic
-                            print(f"Please enter a valid value for {field_name}")
 
                     except BookValidationError as e:
                         print(f"✗ {e}")
@@ -150,7 +156,8 @@ class AddEntityAction(EntityServiceAction):
             # Confirm data before saving
             print("\n📋 Data entered:")
             for field, value in new_data.items():
-                print(f"  {field}: {value}")
+                display_value = value if value is not None else "(empty)"
+                print(f"  {field}: {display_value}")
 
             confirm = input(f"\nDo you want to save the {self.entity_name}? (y/n): ").strip()
             if confirm.lower() != 'y':
@@ -169,7 +176,7 @@ class AddEntityAction(EntityServiceAction):
             print(f"✗ {e}")
             return ActionResult(error=True)
         except StorageWriteError as e:
-            print(f"✗ Error saving book: {e}")
+            print(f"✗ Error saving {self.entity_name}: {e}")
             return ActionResult(error=True)
         except KeyboardInterrupt:
             print("\nℹ️ User aborted add")

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+
 from uuid import UUID
 
 from src.actions import ActionResult
@@ -10,7 +10,8 @@ from src.exceptions import (
     ActionCancelledError,
     BookValidationError,
 )
-from src.settings import MIN_PUBLICATION_YEAR, MAX_PUBLICATION_YEAR, ISBN_VALID_LENGTHS
+from src.services.validation_service import ValidationService
+
 
 log = logging.getLogger(__name__)
 
@@ -41,30 +42,31 @@ class UpdateEntityAction(SearchEntityAction):
 
         return f"Find and update a {self.entity_name}"
 
-    def _get_field_value(self, field_name: str, current_value, field_type: type) -> tuple[bool, any]:
-        """Prompt user for a new field value with error handling.
-
-        Displays the current value and allows the user to:
-        - Press Enter to keep the current value
-        - Enter 'cancel' to abort the entire update
-        - Enter a new value (with type conversion and validation)
+    def _get_field_value(self, field_name: str, current_value, field_type: type, is_required: bool = False) -> tuple[
+        bool, any]:
+        """
+        Prompt user for a new field value with error handling.
 
         Args:
             field_name: Name of the field being updated.
             current_value: The current value of the field.
             field_type: The expected type of the field.
+            is_required: Whether the field is required.
 
         Returns:
-            tuple[bool, any]: (changed, new_value) where changed indicates
-                              whether a new value was provided, and new_value
-                              is either the original or the new value.
+            tuple[bool, any]: (changed, new_value)
 
         Raises:
-            ActionCancelledError: If user types 'cancel' or presses Ctrl+C."""
-
+            ActionCancelledError: If user types 'cancel' or presses Ctrl+C.
+        """
         try:
             # Display current value
-            prompt = f"{field_name} [{current_value}]: "
+            current_display = current_value if current_value is not None else "(empty)"
+            prompt = f"{field_name}"
+            if is_required:
+                prompt += " (required)"
+            prompt += f" [{current_display}]: "
+
             user_input = input(prompt).strip()
 
             # If user just pressed Enter, keep current value
@@ -81,12 +83,8 @@ class UpdateEntityAction(SearchEntityAction):
                     new_value = int(user_input)
                     # Additional validation for year
                     if field_name == "year":
-                        current_year = MAX_PUBLICATION_YEAR
-                        if new_value < MIN_PUBLICATION_YEAR or new_value > MAX_PUBLICATION_YEAR:
-                            raise BookValidationError(
-                                field_name,
-                                f"The year should be between {MIN_PUBLICATION_YEAR} and {MAX_PUBLICATION_YEAR}"
-                            )
+                        ValidationService.validate_year(new_value, field_name, for_update=True)
+
                 elif field_type == UUID:
                     new_value = UUID(user_input)
                 elif field_type == bool:
@@ -96,12 +94,14 @@ class UpdateEntityAction(SearchEntityAction):
                 else:  # str and others
                     # Additional validation for ISBN
                     if field_name == "isbn" and user_input:
-                        isbn_clean = user_input.replace('-', '').replace(' ', '')
-                        if not isbn_clean.isdigit() or len(isbn_clean) not in ISBN_VALID_LENGTHS:
-                            raise BookValidationError(
-                                field_name,
-                                "ISBN must be 10 or 13 digits"
-                            )
+                        ValidationService.validate_isbn(user_input, field_name)
+
+                    # Check required fields
+                    if is_required and not user_input:
+                        raise BookValidationError(
+                            field_name,
+                            f"{field_name} cannot be empty"
+                        )
                     new_value = user_input
 
                 return True, new_value
