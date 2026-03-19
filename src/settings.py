@@ -1,4 +1,3 @@
-# src/config.py
 """
 Configuration constants for the Book Management System.
 """
