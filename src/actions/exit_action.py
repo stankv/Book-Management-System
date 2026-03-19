@@ -9,5 +9,5 @@ class ExitAction(Action):
         return "Exiting action"
 
     def execute(self) -> ActionResult:
-        print("\nRunning Example Action\n")
+        print("\nExiting the application\n")
         return ActionResult(stop=True)

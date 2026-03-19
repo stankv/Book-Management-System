@@ -10,4 +10,4 @@ class Book(BaseEntity):
     isbn: str = ""
 
     def __str__(self):
-        return f"{self.title}, {self.author}, {self.year}, {self.isbn}"
+        return f"Title: {self.title}, Author: {self.author}, Year: {self.year}, ISBN: {self.isbn}"
