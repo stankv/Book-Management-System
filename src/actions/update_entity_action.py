@@ -14,14 +14,52 @@ log = logging.getLogger(__name__)
 
 
 class UpdateEntityAction(SearchEntityAction):
+    """Action that updates an existing entity.
+
+    Extends SearchEntityAction to first find an entity, then guides the
+    user through updating its fields. Only fields that the user chooses
+    to modify are updated; others retain their original values.
+
+    This action demonstrates inheritance from another action to reuse
+    search functionality while adding update-specific behavior."""
+
     def get_name(self) -> str:
+        """Get the action name for menu display.
+
+        Returns:
+            str: 'Update {entity_name}' (e.g., 'Update Book')"""
+
         return f"Update {self.entity_name}"
 
     def get_description(self) -> str:
+        """Get a brief description of the action.
+
+        Returns:
+            str: 'Find and update a {entity_name}'"""
+
         return f"Find and update a {self.entity_name}"
 
     def _get_field_value(self, field_name: str, current_value, field_type: type) -> tuple[bool, any]:
-        """Prompt user for new field value with error handling"""
+        """Prompt user for a new field value with error handling.
+
+        Displays the current value and allows the user to:
+        - Press Enter to keep the current value
+        - Enter 'cancel' to abort the entire update
+        - Enter a new value (with type conversion and validation)
+
+        Args:
+            field_name: Name of the field being updated.
+            current_value: The current value of the field.
+            field_type: The expected type of the field.
+
+        Returns:
+            tuple[bool, any]: (changed, new_value) where changed indicates
+                              whether a new value was provided, and new_value
+                              is either the original or the new value.
+
+        Raises:
+            ActionCancelledError: If user types 'cancel' or presses Ctrl+C."""
+
         try:
             # Display current value
             prompt = f"{field_name} [{current_value}]: "
@@ -74,7 +112,15 @@ class UpdateEntityAction(SearchEntityAction):
             raise ActionCancelledError("Update aborted by user")
 
     def _get_editable_fields(self) -> list[tuple[str, type]]:
-        """Get list of editable fields with their types"""
+        """Get list of editable fields with their types.
+
+        Retrieves field names from the base class and pairs them with
+        their corresponding types from the entity's dataclass definition.
+
+        Returns:
+            list[tuple[str, type]]: List of (field_name, field_type) pairs
+                                   for all editable fields."""
+
         try:
             editable_fields = []
             entity_type = self.service.entity_type
@@ -94,7 +140,20 @@ class UpdateEntityAction(SearchEntityAction):
             return []
 
     def _select_entity_from_results(self, results: list) -> any:
-        """Let user select an entity from multiple results"""
+        """Let user select an entity from multiple search results.
+
+        When a search returns multiple entities, this method displays
+        them with numbers and lets the user choose which one to update.
+
+        Args:
+            results: List of entity objects from search.
+
+        Returns:
+            any: The selected entity object.
+
+        Raises:
+            ActionCancelledError: If user cancels the selection."""
+
         try:
             print(f"\nFound {len(results)} {self.entity_name}(s):")
             for idx, entity in enumerate(results, start=1):
@@ -124,6 +183,24 @@ class UpdateEntityAction(SearchEntityAction):
             raise ActionCancelledError("Selection aborted by user")
 
     def execute(self) -> ActionResult:
+        """Execute the update action.
+
+        This method orchestrates the entire update process:
+        1. Search for entities using criteria from user
+        2. If multiple found, let user select one
+        3. For each editable field, prompt for new value
+        4. Show changes and ask for confirmation
+        5. Apply updates if confirmed
+
+        Returns:
+            ActionResult: With error=True if an exception occurred.
+
+        Handles:
+            ActionCancelledError: User cancelled at any step.
+            EntityNotFoundError: Entity disappeared between search and update.
+            StorageWriteError: Save failures.
+            KeyboardInterrupt: User pressed Ctrl+C."""
+
         print(f"\n✏️ Update {self.entity_name}")
 
         try:

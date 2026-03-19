@@ -14,14 +14,51 @@ log = logging.getLogger(__name__)
 
 
 class SearchEntityAction(EntityServiceAction):
+    """Action that searches for entities based on user-specified criteria.
+
+    Provides a menu-driven interface for users to select search criteria
+    (ID, title, author, ISBN) and then performs the search using the
+    service layer. Displays results in a formatted list.
+
+    This action serves as a base for UpdateEntityAction, which extends
+    the search functionality for update operations."""
+
     def get_name(self) -> str:
+        """Get the action name for menu display.
+
+        Returns:
+            str: 'Search {entity_name}' (e.g., 'Search Book')"""
+
         return f"Search {self.entity_name}"
 
     def get_description(self) -> str:
+        """Get a brief description of the action.
+        
+        Returns:
+            str: 'Search for {entity_name} by id, title, author, or ISBN'"""
+
         return f"Search for {self.entity_name} by id, title, author, or ISBN"
 
     def _get_search_criteria(self) -> dict | None:
-        """Display search menu and return search criteria dict"""
+        """Display search menu and collect user's search criteria.
+
+        Presents a numbered menu of search options, gets user input,
+        and returns the appropriate criteria dictionary.
+
+        Returns:
+            dict | None: Search criteria dictionary with field-value pairs,
+                         or None if the operation was cancelled/invalid.
+
+        Raises:
+            ActionCancelledError: If user cancels or aborts the operation.
+            InvalidChoiceError: If user selects an invalid menu option.
+
+        Example return values:
+            {"id": UUID("...")}
+            {"title": "Clean Code"}
+            {"author": "Martin"}
+            {"isbn": "978-3-16-148410-0"}"""
+
         try:
             print("\nSearch by:")
             print("  1. ID (UUID)")
@@ -68,6 +105,22 @@ class SearchEntityAction(EntityServiceAction):
             raise ActionCancelledError("Search aborted by user")
 
     def execute(self) -> ActionResult:
+        """Execute the search action.
+
+        Guides the user through selecting search criteria, performs the
+        search using the service, and displays the results. Provides
+        clear feedback for empty results or errors.
+
+        Returns:
+            ActionResult: With error=True if an exception occurred.
+
+        Handles:
+            ActionCancelledError: User cancelled the operation.
+            InvalidChoiceError: User selected invalid menu option.
+            StorageReadError: For general read failures.
+            StorageCorruptedError: For corrupted data files.
+            Exception: For unexpected errors."""
+
         print(f"\n🔍 Search {self.entity_name}")
 
         try:

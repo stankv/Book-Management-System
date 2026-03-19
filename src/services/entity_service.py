@@ -19,13 +19,46 @@ log = logging.getLogger(__name__)
 
 
 class EntityService(BaseService):
+    """Generic service implementation for managing any entity type.
+
+    Provides concrete implementation of BaseService with common CRUD operations,
+    data caching, and error handling. This service works with any entity class
+    that inherits from BaseEntity.
+
+    The service uses lazy loading: data is only loaded from storage when first
+    accessed. It maintains an in-memory cache (_entities_data) to avoid
+    repeated file reads.
+
+    Attributes:
+        entity_type: The class of the entity this service manages.
+        storage: The storage backend for persistence.
+        _entities_data: Internal cache mapping entity IDs to entity objects."""
+
     def __init__(self, entity_type: type[BaseEntity], storage: BaseStorage):
+        """Initialize the entity service.
+
+        Args:
+            entity_type: The class of the entity (e.g., Book).
+            storage: Storage implementation for persistence."""
         self.entity_type = entity_type
         self.storage = storage
         self._entities_data = {}
 
     def _load_entities(self):
-        """Load entities from storage with error handling"""
+        """Load entities from storage with comprehensive error handling.
+
+        Reads data from storage, converts UUID strings back to UUID objects,
+        and instantiates entity objects. Handles various error conditions
+        gracefully, logging issues and continuing with valid data.
+
+        Raises:
+            StorageCorruptedError: If JSON parsing fails.
+            StorageReadError: For permission or other file access issues.
+
+        Logs:
+            - Info: When no entities are found.
+            - Error: For each entity that fails to load.
+            - Info: Count of successfully recovered entities."""
         try:
             entities = self.storage.load_data()
             if not entities:
@@ -60,7 +93,17 @@ class EntityService(BaseService):
             raise StorageReadError(f"Unexpected loading error: {e}") from e
 
     def _save_entities(self):
-        """Save entities to storage with error handling"""
+        """Save entities to storage with error handling.
+
+        Converts all cached entities to dictionaries and writes them
+        to storage. Handles various error conditions appropriately.
+
+        Raises:
+            StorageWriteError: For permission issues or JSON encoding errors.
+
+        Logs:
+            - Debug: Success count on successful save.
+            - Error: For various error conditions."""
         try:
             data = [asdict(entity) for entity in self.entities]
             self.storage.save_data(data)
@@ -77,29 +120,65 @@ class EntityService(BaseService):
 
     @property
     def entities_data(self):
+        """Get the entity cache, loading from storage if necessary.
+
+        Provides lazy loading: if cache is empty, triggers load from storage.
+
+        Returns:
+            dict: Dictionary mapping entity IDs to entity objects."""
         if not self._entities_data:
             self._load_entities()
         return self._entities_data
 
     @property
     def entities(self):
+        """Get list of all entities, loading from storage if necessary.
+
+        Provides lazy loading: if cache is empty, triggers load from storage.
+
+        Returns:
+            list: List of all entity objects."""
         if not self._entities_data:
             self._load_entities()
         return list(self._entities_data.values())
 
     def get_all(self):
-        """Get all entities"""
+        """Get all entities.
+
+        Returns:
+            list: A list of all entity objects."""
         return self.entities
 
     def get_by_id(self, id):
-        """Get entity by ID"""
+        """Get entity by ID.
+
+        Args:
+            id: The UUID of the entity to retrieve.
+
+        Returns:
+            BaseEntity: The entity object.
+
+        Raises:
+            EntityNotFoundError: If no entity exists with the given ID."""
         entity = self.entities_data.get(id)
         if not entity:
             raise EntityNotFoundError(self.entity_type.__name__, id)
         return entity
 
     def add(self, item):
-        """Add new entity"""
+        """Add a new entity.
+
+        Args:
+            item: The entity object to add.
+
+        Returns:
+            BaseEntity: The added entity.
+
+        Raises:
+            EntityValidationError: If the entity has no ID.
+            EntityAlreadyExistsError: If an entity with the same ID already exists.
+            StorageWriteError: If saving fails."""
+
         # Validate item has required fields
         if not hasattr(item, 'id') or item.id is None:
             raise EntityValidationError(self.entity_type.__name__, "id", "Entity must have an ID")
@@ -114,7 +193,17 @@ class EntityService(BaseService):
         return item
 
     def delete(self, id):
-        """Delete entity by ID"""
+        """Delete entity by ID.
+
+        Args:
+            id: The UUID of the entity to delete.
+
+        Returns:
+            bool: True if deletion was successful.
+
+        Raises:
+            EntityNotFoundError: If no entity exists with the given ID.
+            StorageWriteError: If saving after deletion fails.D"""
         if id not in self.entities_data:
             raise EntityNotFoundError(self.entity_type.__name__, id)
 
@@ -124,7 +213,23 @@ class EntityService(BaseService):
         return True
 
     def search(self, **kwargs):
-        """Search entities with error handling"""
+        """Search entities with flexible matching.
+
+        Performs case-insensitive partial matching for string fields,
+        exact matching for other types. Empty or None search criteria
+        are ignored. Handles errors gracefully, logging warnings and
+        continuing with remaining entities.
+
+        Args:
+            **kwargs: Field-value pairs to search for.
+                     Example: search(title="clean", author="martin")
+
+        Returns:
+            list: List of entities matching all criteria.
+
+        Logs:
+            - Info: Search results count.
+            - Warning: For any errors during entity comparison."""
         if not self.entities:
             return []
 
@@ -171,7 +276,27 @@ class EntityService(BaseService):
         return results
 
     def update(self, id, **kwargs):
-        """Update entity with error handling"""
+        """Update entity fields with error handling.
+
+        Updates only the fields specified in kwargs. Compares values before
+        updating to avoid unnecessary writes. Only saves to storage if
+        changes were actually made.
+
+        Args:
+            id: The UUID of the entity to update.
+            **kwargs: Field-value pairs to update.
+
+        Returns:
+            BaseEntity: The updated entity.
+
+        Raises:
+            EntityNotFoundError: If no entity exists with the given ID.
+            EntityValidationError: If updating a field fails.
+            StorageWriteError: If saving changes fails.
+
+        Logs:
+            - Debug: For each updated field.
+            - Info: When entity is updated or no changes were made."""
         entity = self.get_by_id(id)  # Will raise EntityNotFoundError if not found
 
         changes_made = False

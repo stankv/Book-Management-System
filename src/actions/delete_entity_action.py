@@ -7,20 +7,52 @@ from src.exceptions import (
     EntityNotFoundError,
     StorageWriteError,
     ActionCancelledError,
-    UserInputError,
 )
 
 log = logging.getLogger(__name__)
 
 
 class DeleteEntityAction(EntityServiceAction):
+    """Action that deletes an entity by its ID.
+
+    Prompts the user for an entity ID, validates it, shows the entity
+    details for confirmation, and then performs deletion if confirmed."""
+
     def get_name(self) -> str:
+        """Get the action name for menu display.
+
+        Returns:
+            str: 'Delete {entity_name}' (e.g., 'Delete Book')"""
+
         return f"Delete {self.entity_name}"
 
     def get_description(self) -> str:
+        """Get a brief description of the action.
+
+        Returns:
+            str: 'Delete {entity_name} by id.'"""
+
         return f"Delete {self.entity_name} by id."
 
     def execute(self) -> ActionResult:
+        """Execute the delete action.
+
+        Steps:
+        1. Prompt for entity ID
+        2. Validate UUID format
+        3. Retrieve and display entity details
+        4. Ask for confirmation
+        5. Perform deletion if confirmed
+
+        Returns:
+            ActionResult: With error=True if an exception occurred.
+
+        Handles:
+            ActionCancelledError: User cancelled the operation.
+            EntityNotFoundError: No entity with the given ID.
+            StorageWriteError: Save failures after deletion.
+            KeyboardInterrupt: User pressed Ctrl+C."""
+
         print(f"\n🗑️ Deleting {self.entity_name}")
 
         try:

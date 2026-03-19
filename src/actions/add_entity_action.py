@@ -14,14 +14,47 @@ from src.exceptions import (
 
 
 class AddEntityAction(EntityServiceAction):
+    """Action that adds a new entity to the system.
+
+    Prompts the user for all editable fields, validates each input,
+    confirms the data, and then creates and saves the new entity.
+    Provides comprehensive error handling and user feedback."""
+
     def get_name(self) -> str:
+        """Get the action name for menu display.
+
+        Returns:
+            str: 'Add {entity_name} items' (e.g., 'Add Book items')"""
+
         return f"Add {self.entity_name} items"
 
     def get_description(self) -> str:
+        """Get a brief description of the action.
+
+        Returns:
+            str: 'Add a new {entity_name} to storage'"""
+
         return f"Add a new {self.entity_name} to storage"
 
     def _validate_field(self, field_name: str, value: str) -> tuple[bool, any]:
-        """Validate and convert field value based on field type"""
+        """Validate and convert a field value based on its type.
+
+        Performs type conversion and additional business validation
+        for specific fields like year and ISBN.
+
+        Args:
+            field_name: Name of the field to validate.
+            value: String input from the user.
+
+        Returns:
+            tuple[bool, any]: (success, converted_value) where success indicates
+                              whether validation passed and converted_value is the
+                              type-converted value.
+
+        Raises:
+            BookValidationError: For specific book validation failures.
+            EntityValidationError: For general entity validation issues."""
+
         try:
             field_type = self.service.entity_type.__dataclass_fields__[field_name].type
 
@@ -66,6 +99,25 @@ class AddEntityAction(EntityServiceAction):
             raise EntityValidationError(self.entity_name, field_name, str(e))
 
     def execute(self) -> ActionResult:
+        """Execute the add action.
+
+        Guides the user through the process of adding a new entity:
+        1. Collects and validates input for each editable field
+        2. Allows cancellation at any point with 'cancel' or Ctrl+C
+        3. Shows entered data for confirmation
+        4. Creates and saves the entity
+        5. Provides clear success/error feedback
+
+        Returns:
+            ActionResult: With error=True if an exception occurred.
+
+        Handles:
+            ActionCancelledError: User cancelled the operation.
+            EntityAlreadyExistsError: Duplicate entity.
+            StorageWriteError: Save failures.
+            KeyboardInterrupt: User pressed Ctrl+C.
+            BookValidationError: Field validation failures."""
+
         print(f"\n➕ Add a new {self.entity_name}")
 
         try:
