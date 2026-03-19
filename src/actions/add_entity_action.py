@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from src.actions import ActionResult
 from src.actions.entity_service_action import EntityServiceAction
 from src.exceptions import (
@@ -11,6 +9,7 @@ from src.exceptions import (
     BookYearError,
     BookISBNError,
 )
+from src.settings import MIN_PUBLICATION_YEAR, MAX_PUBLICATION_YEAR, ISBN_VALID_LENGTHS
 
 
 class AddEntityAction(EntityServiceAction):
@@ -68,10 +67,10 @@ class AddEntityAction(EntityServiceAction):
                     int_value = int(value)
                     # Additional validation for year field
                     if field_name == "year":
-                        current_year = datetime.now().year
-                        if int_value < 1450 or int_value > current_year:
+                        current_year = MAX_PUBLICATION_YEAR
+                        if int_value < MIN_PUBLICATION_YEAR or int_value > current_year:
                             raise BookYearError(int_value,
-                                                f"The year must be between 1450 and {current_year}")
+                                                f"The year must be between {MIN_PUBLICATION_YEAR} and {MAX_PUBLICATION_YEAR}")
                     return True, int_value
 
                 elif field_type == float:
@@ -85,7 +84,7 @@ class AddEntityAction(EntityServiceAction):
                     if field_name == "isbn" and value:
                         # Simple ISBN validation (can be complicated if necessary)
                         isbn_clean = value.replace('-', '').replace(' ', '')
-                        if not isbn_clean.isdigit() or len(isbn_clean) not in (10, 13):
+                        if not isbn_clean.isdigit() or len(isbn_clean) not in ISBN_VALID_LENGTHS:
                             raise BookISBNError(value, "ISBN must be 10 or 13 digits!")
                     return True, value
 

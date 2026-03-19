@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from src.actions import ActionResult
@@ -9,6 +10,7 @@ from src.exceptions import (
     ActionCancelledError,
     BookValidationError,
 )
+from src.settings import MIN_PUBLICATION_YEAR, MAX_PUBLICATION_YEAR, ISBN_VALID_LENGTHS
 
 log = logging.getLogger(__name__)
 
@@ -79,11 +81,11 @@ class UpdateEntityAction(SearchEntityAction):
                     new_value = int(user_input)
                     # Additional validation for year
                     if field_name == "year":
-                        current_year = 2026
-                        if new_value < 1450 or new_value > current_year + 5:
+                        current_year = MAX_PUBLICATION_YEAR
+                        if new_value < MIN_PUBLICATION_YEAR or new_value > MAX_PUBLICATION_YEAR:
                             raise BookValidationError(
                                 field_name,
-                                f"The year should be between 1450 and {current_year + 5}"
+                                f"The year should be between {MIN_PUBLICATION_YEAR} and {MAX_PUBLICATION_YEAR}"
                             )
                 elif field_type == UUID:
                     new_value = UUID(user_input)
@@ -95,7 +97,7 @@ class UpdateEntityAction(SearchEntityAction):
                     # Additional validation for ISBN
                     if field_name == "isbn" and user_input:
                         isbn_clean = user_input.replace('-', '').replace(' ', '')
-                        if not isbn_clean.isdigit() or len(isbn_clean) not in (10, 13):
+                        if not isbn_clean.isdigit() or len(isbn_clean) not in ISBN_VALID_LENGTHS:
                             raise BookValidationError(
                                 field_name,
                                 "ISBN must be 10 or 13 digits"
