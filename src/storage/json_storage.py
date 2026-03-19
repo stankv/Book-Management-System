@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from uuid import UUID
 
+from src.settings import JSON_INDENT
 from src.storage.base_storage import BaseStorage
 
 
@@ -11,6 +12,7 @@ class Encoder(json.JSONEncoder):
     Extends the standard JSONEncoder to convert UUID objects to their
     string representation, which is necessary because UUID is not
     natively JSON serializable."""
+
     def default(self, obj):
         """Override the default serialization method.
 
@@ -34,14 +36,14 @@ class JsonStorage(BaseStorage):
 
     Attributes:
         file_path: Path object pointing to the JSON file location.
-        indent: Number of spaces for JSON pretty-printing (default: 2)."""
+        indent: Number of spaces for JSON pretty-printing (default: 2 in settings.py)."""
 
-    def __init__(self, file_path: Path, indent: int = 2) -> None:
+    def __init__(self, file_path: Path, indent=JSON_INDENT) -> None:
         """Initialize JSON storage with a file path.
 
         Args:
             file_path: Path to the JSON file where data will be stored.
-            indent: Number of spaces to use for JSON indentation (default: 2).
+            indent: Number of spaces to use for JSON indentation (default: 2 in settings.py).
                    Set to None for compact storage without extra whitespace."""
         self.file_path = file_path
         self.indent = indent
