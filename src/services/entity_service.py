@@ -111,7 +111,7 @@ class EntityService(BaseService):
         except PermissionError as e:
             log.error("Permission denied saving storage: %s", e)
             raise StorageWriteError(f"Permission denied to write to file: {e}") from e
-        except json.JSONEncodeError as e:
+        except (json.JSONDecodeError, TypeError) as e:
             log.error("Failed to encode entities to JSON: %s", e)
             raise StorageWriteError(f"JSON encoding error: {e}") from e
         except Exception as e:

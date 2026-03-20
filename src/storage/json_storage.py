@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from uuid import UUID
 
+from src.exceptions import StorageReadError, StorageWriteError
 from src.settings import JSON_INDENT
 from src.storage.base_storage import BaseStorage
 
@@ -71,8 +72,15 @@ class JsonStorage(BaseStorage):
             StorageReadError: For other file access errors."""
         if not self.file_path.exists():
             return None
-        with self.file_path.open("r") as file:
-            return json.load(file)
+        try:
+            with self.file_path.open("r", encoding='utf-8') as file:
+                return json.load(file)
+        except json.JSONDecodeError as e:
+            raise StorageReadError(f"JSON decode error: {e}") from e
+        except PermissionError as e:
+            raise StorageReadError(f"Permission denied: {e}") from e
+        except Exception as e:
+            raise StorageReadError(f"Error reading file: {e}") from e
 
     def save_data(self, data):
         """Save data to the JSON file.
@@ -88,5 +96,13 @@ class JsonStorage(BaseStorage):
             json.JSONEncodeError: If the data cannot be serialized to JSON.
             StorageWriteError: For file access errors during writing."""
         self.ensure_path_exists()
-        with self.file_path.open("w") as file:
-            json.dump(data, file, ensure_ascii=False, indent=self.indent, cls=Encoder)
+        try:
+            with self.file_path.open("w", encoding='utf-8') as file:
+                json.dump(data, file, ensure_ascii=False, indent=self.indent, cls=Encoder)
+        except (TypeError, ValueError) as e:
+            # Let TypeError propagate for testing, but wrap in StorageWriteError
+            raise StorageWriteError(f"Data serialization error: {e}") from e
+        except PermissionError as e:
+            raise StorageWriteError(f"Permission denied: {e}") from e
+        except Exception as e:
+            raise StorageWriteError(f"Error writing file: {e}") from e
