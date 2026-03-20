@@ -76,3 +76,9 @@ pytest --cov=src --cov-report=html  # Отчет о покрытии (созда
 ```bash
 pytest --cov=src --cov-report=html --cov-report=term
 ```
+либо с использованием **coverage**:
+```bash
+coverage run -m pytest   
+coverage report -m 
+```
+
