@@ -76,7 +76,9 @@ class DeleteEntityAction(EntityServiceAction):
                 print(f"✗ {self.entity_name} with ID {entity_id} not found")
                 return ActionResult(error=True)
 
-            confirm = input(f"Are you sure you want to delete this {self.entity_name}? (y/n): ").strip()
+            confirm = input(
+                f"Are you sure you want to delete this {self.entity_name}? (y/n): "
+            ).strip()
 
             if confirm.lower() != "y":
                 log.info("Deletion aborted by user")

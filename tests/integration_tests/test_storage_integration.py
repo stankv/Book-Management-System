@@ -1,12 +1,11 @@
 """Integration tests for storage layer with actual file system."""
-import builtins
+
 import json
 import pytest
-from pathlib import Path
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from src.storage.json_storage import JsonStorage
-from src.exceptions import StorageReadError, StorageWriteError
+from src.exceptions import StorageReadError
 
 
 class TestJsonStorageIntegration:
@@ -35,7 +34,7 @@ class TestJsonStorageIntegration:
             {"id": str(uuid4()), "title": "Book 2", "author": "Author 2"},
         ]
 
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(test_data, f, ensure_ascii=False, indent=2)
 
         # Load using storage
@@ -129,30 +128,6 @@ class TestJsonStorageIntegration:
         assert nested_path.parent.exists()
         assert nested_path.exists()
 
-    # @pytest.mark.parametrize("file_mode", ["r", "w", "a"])
-    # def test_file_permissions_error_handling(self, test_data_dir, file_mode, mocker):
-    #     """Test handling of permission errors."""
-    #     file_path = test_data_dir / "permission_test.json"
-    #     storage = JsonStorage(file_path)
-    #
-    #     # Создаем директорию
-    #     test_data_dir.mkdir(parents=True, exist_ok=True)
-    #
-    #     # Создаем файл перед тестом
-    #     file_path.touch()
-    #
-    #     # Мокируем open с помощью side_effect
-    #     mocker.patch("builtins.open", side_effect=PermissionError("Permission denied"))
-    #
-    #     if file_mode == "r":
-    #         with pytest.raises(StorageReadError) as exc_info:
-    #             storage.load_data()
-    #         assert "Permission denied" in str(exc_info.value)
-    #     else:
-    #         with pytest.raises(StorageWriteError) as exc_info:
-    #             storage.save_data([])
-    #         assert "Permission denied" in str(exc_info.value)
-
     def test_save_large_dataset(self, test_data_dir):
         """Test saving and loading a large dataset."""
         file_path = test_data_dir / "large_dataset.json"
@@ -161,13 +136,15 @@ class TestJsonStorageIntegration:
         # Create 1000 books
         large_data = []
         for i in range(1000):
-            large_data.append({
-                "id": str(uuid4()),
-                "title": f"Book {i}",
-                "author": f"Author {i % 10}",
-                "year": 2000 + (i % 30),
-                "isbn": f"978000000{i:04d}"
-            })
+            large_data.append(
+                {
+                    "id": str(uuid4()),
+                    "title": f"Book {i}",
+                    "author": f"Author {i % 10}",
+                    "year": 2000 + (i % 30),
+                    "isbn": f"978000000{i:04d}",
+                }
+            )
 
         # Save
         storage.save_data(large_data)
@@ -182,12 +159,14 @@ class TestJsonStorageIntegration:
         file_path = test_data_dir / "unicode_test.json"
         storage = JsonStorage(file_path)
 
-        data = [{
-            "id": str(uuid4()),
-            "title": "Book in Russian",
-            "author": "Author Name in Chinese",
-            "description": "French text with accents"
-        }]
+        data = [
+            {
+                "id": str(uuid4()),
+                "title": "Book in Russian",
+                "author": "Author Name in Chinese",
+                "description": "French text with accents",
+            }
+        ]
 
         storage.save_data(data)
         loaded = storage.load_data()
@@ -201,7 +180,7 @@ class TestJsonStorageIntegration:
         file_path = test_data_dir / "corrupted.json"
 
         # Write invalid JSON
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write('{"invalid": json, file: [1,2,3]')  # Missing closing brace
 
         storage = JsonStorage(file_path)
@@ -221,7 +200,9 @@ class TestJsonStorageIntegration:
 
         with pytest.raises(StorageReadError) as exc_info:
             storage.load_data()
-        assert "JSON decode error" in str(exc_info.value) or "Expecting value" in str(exc_info.value)
+        assert "JSON decode error" in str(exc_info.value) or "Expecting value" in str(
+            exc_info.value
+        )
 
     def test_custom_indent_parameter(self, test_data_dir):
         """Test that indent parameter affects file formatting."""
@@ -234,15 +215,15 @@ class TestJsonStorageIntegration:
             storage.save_data(data)
 
             # Read raw file to check formatting
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 content = f.read()
 
             if indent is None:
                 # Compact JSON - no newlines between items
-                assert '\n' not in content or len(content.split('\n')) <= 2
+                assert "\n" not in content or len(content.split("\n")) <= 2
             else:
                 # Pretty printed - should have newlines
-                assert '\n' in content
+                assert "\n" in content
 
     def test_concurrent_file_access(self, test_data_dir):
         """Test that storage handles concurrent access (simulated)."""
@@ -261,4 +242,3 @@ class TestJsonStorageIntegration:
         # Storage1 reads - should get storage2's data (last write wins)
         loaded = storage1.load_data()
         assert loaded[0]["owner"] == "storage2"
-        

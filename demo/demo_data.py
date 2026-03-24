@@ -24,6 +24,7 @@ book3 = Book(
     isbn="978-5-6082166-3-5",
 )
 
+
 def main():
     # создание json-файла с демо данными
     data_dir = Path(__file__).parent.parent / "src" / "data"
@@ -33,6 +34,7 @@ def main():
     books_service.add(book2)
     books_service.add(book3)
     print("file books.json with demo data created!")
+
 
 if __name__ == "__main__":
     main()

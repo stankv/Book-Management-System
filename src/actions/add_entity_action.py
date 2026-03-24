@@ -34,7 +34,9 @@ class AddEntityAction(EntityServiceAction):
 
         return f"Add a new {self.entity_name} to storage"
 
-    def _validate_field(self, field_name: str, value: str, is_required: bool = False) -> tuple[bool, any]:
+    def _validate_field(
+        self, field_name: str, value: str, is_required: bool = False
+    ) -> tuple[bool, any]:
         """
         Validate and convert a field value based on its type.
 
@@ -53,10 +55,7 @@ class AddEntityAction(EntityServiceAction):
         try:
             # Check required fields
             if is_required and not value:
-                raise BookValidationError(
-                    field_name,
-                    f"{field_name} cannot be empty"
-                )
+                raise BookValidationError(field_name, f"{field_name} cannot be empty")
 
             # Empty value is allowed for optional fields
             if not value:
@@ -66,18 +65,18 @@ class AddEntityAction(EntityServiceAction):
 
             # Type conversion with specific validations
             try:
-                if field_type == int:
+                if field_type is int:
                     int_value = int(value)
                     # Additional validation for year field
                     if field_name == "year":
                         ValidationService.validate_year(int_value, field_name, for_update=False)
                     return True, int_value
 
-                elif field_type == float:
+                elif field_type is float:
                     return True, float(value)
 
-                elif field_type == bool:
-                    return True, value.lower() in ('true', 'yes', '1', 'y', 'да')
+                elif field_type is bool:
+                    return True, value.lower() in ("true", "yes", "1", "y", "да")
 
                 else:  # str and others
                     # Additional validation for ISBN
@@ -136,7 +135,7 @@ class AddEntityAction(EntityServiceAction):
                         value = input(prompt).strip()
 
                         # Allow user to cancel
-                        if value.lower() == 'cancel':
+                        if value.lower() == "cancel":
                             raise ActionCancelledError("Add cancelled by user")
 
                         valid, converted_value = self._validate_field(
@@ -160,7 +159,7 @@ class AddEntityAction(EntityServiceAction):
                 print(f"  {field}: {display_value}")
 
             confirm = input(f"\nDo you want to save the {self.entity_name}? (y/n): ").strip()
-            if confirm.lower() != 'y':
+            if confirm.lower() != "y":
                 raise ActionCancelledError("Add cancelled by user")
 
             # Create and add entity

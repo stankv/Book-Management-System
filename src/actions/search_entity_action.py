@@ -33,7 +33,7 @@ class SearchEntityAction(EntityServiceAction):
 
     def get_description(self) -> str:
         """Get a brief description of the action.
-        
+
         Returns:
             str: 'Search for {entity_name} by id, title, author, or ISBN'"""
 

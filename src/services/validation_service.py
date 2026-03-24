@@ -38,21 +38,17 @@ class ValidationService:
             return isbn  # Empty ISBN is allowed (optional field)
 
         # Remove hyphens and spaces
-        isbn_clean = isbn.replace('-', '').replace(' ', '')
+        isbn_clean = isbn.replace("-", "").replace(" ", "")
 
         # Check if it contains only digits
         if not isbn_clean.isdigit():
-            raise BookISBNError(
-                isbn,
-                "ISBN must contain only digits, hyphens, or spaces"
-            )
+            raise BookISBNError(isbn, "ISBN must contain only digits, hyphens, or spaces")
 
         # Check length
         if len(isbn_clean) not in ISBN_VALID_LENGTHS:
-            valid_lengths = ", ".join(str(l) for l in sorted(ISBN_VALID_LENGTHS))
+            valid_lengths = ", ".join(str(length) for length in sorted(ISBN_VALID_LENGTHS))
             raise BookISBNError(
-                isbn,
-                f"ISBN must be {valid_lengths} digits long (found {len(isbn_clean)})"
+                isbn, f"ISBN must be {valid_lengths} digits long (found {len(isbn_clean)})"
             )
 
         return isbn_clean
@@ -82,8 +78,7 @@ class ValidationService:
                 )
             else:
                 message = (
-                    f"The year must be between {MIN_PUBLICATION_YEAR} "
-                    f"and {MAX_PUBLICATION_YEAR}"
+                    f"The year must be between {MIN_PUBLICATION_YEAR} and {MAX_PUBLICATION_YEAR}"
                 )
             raise BookYearError(year, message)
 
@@ -107,8 +102,5 @@ class ValidationService:
         """
 
         if not value or not value.strip():
-            raise BookValidationError(
-                field_name,
-                f"{field_name} cannot be empty for {entity_name}"
-            )
+            raise BookValidationError(field_name, f"{field_name} cannot be empty for {entity_name}")
         return value.strip()

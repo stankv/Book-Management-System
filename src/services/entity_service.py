@@ -180,7 +180,7 @@ class EntityService(BaseService):
             StorageWriteError: If saving fails."""
 
         # Validate item has required fields
-        if not hasattr(item, 'id') or item.id is None:
+        if not hasattr(item, "id") or item.id is None:
             raise EntityValidationError(self.entity_type.__name__, "id", "Entity must have an ID")
 
         # Check if entity with same ID already exists
@@ -268,11 +268,15 @@ class EntityService(BaseService):
                 if match:
                     results.append(entity)
             except Exception as e:
-                log.warning("Error comparing entity %s: %s", getattr(entity, 'id', 'unknown'), e)
+                log.warning("Error comparing entity %s: %s", getattr(entity, "id", "unknown"), e)
                 continue
 
-        log.info("Search for %s with criteria %s found %d results",
-                 self.entity_type.__name__, kwargs, len(results))
+        log.info(
+            "Search for %s with criteria %s found %d results",
+            self.entity_type.__name__,
+            kwargs,
+            len(results),
+        )
         return results
 
     def update(self, id, **kwargs):
@@ -304,8 +308,7 @@ class EntityService(BaseService):
 
         for field, value in kwargs.items():
             if not hasattr(entity, field):
-                log.warning("Field %s does not exist in %s",
-                            field, self.entity_type.__name__)
+                log.warning("Field %s does not exist in %s", field, self.entity_type.__name__)
                 continue
 
             try:
@@ -314,11 +317,13 @@ class EntityService(BaseService):
                 # Checking if it is safe to compare values
                 try:
                     # Trying to compare values
-                    values_are_different = (value != current_value)
+                    values_are_different = value != current_value
                 except Exception as e:
                     # If the comparison fails (different types, not supported, etc.),
                     # we believe that the values are different and need to be updated, but we log the warning
-                    log.warning("Could not compare values for field %s: %s. Will update anyway.", field, e)
+                    log.warning(
+                        "Could not compare values for field %s: %s. Will update anyway.", field, e
+                    )
                     values_are_different = True
 
                 if values_are_different:
@@ -329,9 +334,7 @@ class EntityService(BaseService):
                     except Exception as e:
                         log.error("Failed to set field %s: %s", field, e)
                         raise EntityValidationError(
-                            self.entity_type.__name__,
-                            field,
-                            f"Cannot set value: {e}"
+                            self.entity_type.__name__, field, f"Cannot set value: {e}"
                         ) from e
 
             except Exception as e:

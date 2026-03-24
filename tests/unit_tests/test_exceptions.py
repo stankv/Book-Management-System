@@ -277,8 +277,9 @@ class TestExceptionInheritance:
         ]
 
         for exception in exceptions:
-            assert isinstance(exception, BookManagementError), \
+            assert isinstance(exception, BookManagementError), (
                 f"{exception.__class__.__name__} does not inherit from BookManagementError"
+            )
 
     def test_storage_corrupted_inheritance(self):
         """Test that StorageCorruptedError inherits from StorageReadError."""
@@ -331,17 +332,50 @@ class TestExceptionAttributes:
         assert error.entity_name == "book"
 
 
-@pytest.mark.parametrize("exception_class,args,expected_contains,expected_custom", [
-    (StorageReadError, ("Custom read error",), "Unable to read from storage", "Custom read error"),
-    (StorageWriteError, ("Custom write error",), "Failed to save data to storage", "Custom write error"),
-    (StorageCorruptedError, ("Custom corrupt error",), "Data file is corrupt", "Custom corrupt error"),
-    (BookNotFoundError, (123, "Custom not found"), "Book with ID", "Custom not found"),
-    (BookAlreadyExistsError, ("Custom exists",), "Book with this data already exists", "Custom exists"),
-    (BookISBNError, ("978-0132350884", "Custom ISBN error"), "Incorrect ISBN format", "Custom ISBN error"),
-    (BookYearError, (2025, "Custom year error"), "Incorrect year of publication", "Custom year error"),
-    (ActionCancelledError, ("Custom cancel",), "Operation cancelled", "Custom cancel"),
-    (InvalidChoiceError, ("5", "Custom choice"), "Incorrect selection", "Custom choice"),
-])
+@pytest.mark.parametrize(
+    "exception_class,args,expected_contains,expected_custom",
+    [
+        (
+            StorageReadError,
+            ("Custom read error",),
+            "Unable to read from storage",
+            "Custom read error",
+        ),
+        (
+            StorageWriteError,
+            ("Custom write error",),
+            "Failed to save data to storage",
+            "Custom write error",
+        ),
+        (
+            StorageCorruptedError,
+            ("Custom corrupt error",),
+            "Data file is corrupt",
+            "Custom corrupt error",
+        ),
+        (BookNotFoundError, (123, "Custom not found"), "Book with ID", "Custom not found"),
+        (
+            BookAlreadyExistsError,
+            ("Custom exists",),
+            "Book with this data already exists",
+            "Custom exists",
+        ),
+        (
+            BookISBNError,
+            ("978-0132350884", "Custom ISBN error"),
+            "Incorrect ISBN format",
+            "Custom ISBN error",
+        ),
+        (
+            BookYearError,
+            (2025, "Custom year error"),
+            "Incorrect year of publication",
+            "Custom year error",
+        ),
+        (ActionCancelledError, ("Custom cancel",), "Operation cancelled", "Custom cancel"),
+        (InvalidChoiceError, ("5", "Custom choice"), "Incorrect selection", "Custom choice"),
+    ],
+)
 def test_exception_messages(exception_class, args, expected_contains, expected_custom):
     """Test default and custom messages for various exceptions."""
     # Test default message
@@ -359,8 +393,10 @@ def test_exception_messages(exception_class, args, expected_contains, expected_c
     # Для StorageReadError и StorageWriteError проверяем часть сообщения
     if exception_class in [StorageReadError, StorageWriteError, StorageCorruptedError]:
         # Проверяем, что ожидаемая фраза содержится в сообщении
-        assert expected_contains.lower() in str(error_default).lower() or \
-               "error" in str(error_default).lower()
+        assert (
+            expected_contains.lower() in str(error_default).lower()
+            or "error" in str(error_default).lower()
+        )
     else:
         assert expected_contains.lower() in str(error_default).lower()
 

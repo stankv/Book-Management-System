@@ -73,7 +73,7 @@ class JsonStorage(BaseStorage):
         if not self.file_path.exists():
             return None
         try:
-            with self.file_path.open("r", encoding='utf-8') as file:
+            with self.file_path.open("r", encoding="utf-8") as file:
                 return json.load(file)
         except json.JSONDecodeError as e:
             raise StorageReadError(f"JSON decode error: {e}") from e
@@ -97,7 +97,7 @@ class JsonStorage(BaseStorage):
             StorageWriteError: For file access errors during writing."""
         self.ensure_path_exists()
         try:
-            with self.file_path.open("w", encoding='utf-8') as file:
+            with self.file_path.open("w", encoding="utf-8") as file:
                 json.dump(data, file, ensure_ascii=False, indent=self.indent, cls=Encoder)
         except (TypeError, ValueError) as e:
             # Let TypeError propagate for testing, but wrap in StorageWriteError

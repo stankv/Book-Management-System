@@ -1,8 +1,6 @@
 """Unit tests for action classes."""
 
-import pytest
-from uuid import UUID, uuid4
-from unittest.mock import Mock, patch
+from uuid import uuid4
 
 from src.actions import (
     ActionResult,
@@ -12,12 +10,6 @@ from src.actions import (
     SearchEntityAction,
     UpdateEntityAction,
     ExitAction,
-)
-from src.exceptions import (
-    EntityNotFoundError,
-    ActionCancelledError,
-    InvalidChoiceError,
-    BookValidationError,
 )
 
 
@@ -106,8 +98,7 @@ class TestAddEntityAction:
 
         assert result.error is False
         assert len(entity_service.get_all()) == 1
-        assert any("successfully added" in output.lower()
-                   for output in mock_io["outputs"])
+        assert any("successfully added" in output.lower() for output in mock_io["outputs"])
 
     def test_add_entity_cancel_during_input(self, entity_service, mock_io):
         """Test cancelling during field input."""
@@ -119,8 +110,7 @@ class TestAddEntityAction:
 
         assert result.error is False
         assert len(entity_service.get_all()) == 0
-        assert any("cancelled" in output.lower()
-                   for output in mock_io["outputs"])
+        assert any("cancelled" in output.lower() for output in mock_io["outputs"])
 
     def test_add_entity_cancel_at_confirmation(self, entity_service, mock_io):
         """Test cancelling at confirmation step."""
@@ -154,8 +144,10 @@ class TestAddEntityAction:
         assert result.error is False
         assert len(entity_service.get_all()) == 1
         # Should have shown error message
-        assert any("year" in output.lower() and "between" in output.lower()
-                   for output in mock_io["outputs"])
+        assert any(
+            "year" in output.lower() and "between" in output.lower()
+            for output in mock_io["outputs"]
+        )
 
 
 class TestDeleteEntityAction:
@@ -193,8 +185,7 @@ class TestDeleteEntityAction:
         result = action.execute()
 
         assert result.error is True
-        assert any("not found" in output.lower()
-                   for output in mock_io["outputs"])
+        assert any("not found" in output.lower() for output in mock_io["outputs"])
 
     def test_delete_entity_cancel_at_confirmation(self, populated_service, mock_io, multiple_books):
         """Test cancelling deletion at confirmation."""
@@ -331,7 +322,6 @@ class TestUpdateEntityAction:
         """Test successful entity update."""
         action = UpdateEntityAction(populated_service)
         book_id = populated_service._test_book_ids[0]
-        book = populated_service.get_by_id(book_id)
         new_title = "Updated Title"
 
         # Search for the book by ID (более надежно)
@@ -386,8 +376,10 @@ class TestUpdateEntityAction:
 
         assert result.error is False
         # Проверяем, что было сообщение об отмене
-        assert any("cancelled" in output.lower() or "cancel" in output.lower()
-                   for output in mock_io["outputs"])
+        assert any(
+            "cancelled" in output.lower() or "cancel" in output.lower()
+            for output in mock_io["outputs"]
+        )
 
     def test_update_cancel_during_field_update(self, populated_service, mock_io):
         """Test cancelling during field update."""
@@ -502,4 +494,5 @@ class TestEntityServiceAction:
     def test_not_editable_fields_classvar(self, entity_service):
         """Test not_editable_fields class variable."""
         from src.actions.entity_service_action import EntityServiceAction
+
         assert "id" in EntityServiceAction.not_editable_fields

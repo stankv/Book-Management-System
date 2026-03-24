@@ -15,13 +15,16 @@ class TestValidationService:
 
     # === ISBN Validation Tests ===
 
-    @pytest.mark.parametrize("isbn", [
-        "0132350882",  # 10 digit
-        "9780132350884",  # 13 digit
-        "0-13-235088-2",  # 10 with hyphens
-        "978-0-13-235088-4",  # 13 with hyphens
-        "0 13 235088 2",  # 10 with spaces
-    ])
+    @pytest.mark.parametrize(
+        "isbn",
+        [
+            "0132350882",  # 10 digit
+            "9780132350884",  # 13 digit
+            "0-13-235088-2",  # 10 with hyphens
+            "978-0-13-235088-4",  # 13 with hyphens
+            "0 13 235088 2",  # 10 with spaces
+        ],
+    )
     def test_validate_isbn_valid(self, isbn):
         """Test validation of valid ISBNs."""
         cleaned = self.service.validate_isbn(isbn)
@@ -35,12 +38,15 @@ class TestValidationService:
         result = self.service.validate_isbn("")
         assert result == ""
 
-    @pytest.mark.parametrize("isbn", [
-        "123",  # too short
-        "9780132350884123",  # too long
-        "abc",  # not digits
-        "ISBN-13: 9780132350884",  # contains letters
-    ])
+    @pytest.mark.parametrize(
+        "isbn",
+        [
+            "123",  # too short
+            "9780132350884123",  # too long
+            "abc",  # not digits
+            "ISBN-13: 9780132350884",  # contains letters
+        ],
+    )
     def test_validate_isbn_invalid(self, isbn):
         """Test validation of invalid ISBNs raises appropriate errors."""
         with pytest.raises(BookISBNError) as exc_info:
@@ -49,23 +55,29 @@ class TestValidationService:
 
     # === Year Validation Tests ===
 
-    @pytest.mark.parametrize("year", [
-        MIN_PUBLICATION_YEAR,
-        2000,
-        2020,
-        MAX_PUBLICATION_YEAR,
-    ])
+    @pytest.mark.parametrize(
+        "year",
+        [
+            MIN_PUBLICATION_YEAR,
+            2000,
+            2020,
+            MAX_PUBLICATION_YEAR,
+        ],
+    )
     def test_validate_year_valid(self, year):
         """Test validation of valid years."""
         result = self.service.validate_year(year)
         assert result == year
 
-    @pytest.mark.parametrize("year", [
-        MIN_PUBLICATION_YEAR - 1,
-        1400,
-        MAX_PUBLICATION_YEAR + 1,
-        2100,
-    ])
+    @pytest.mark.parametrize(
+        "year",
+        [
+            MIN_PUBLICATION_YEAR - 1,
+            1400,
+            MAX_PUBLICATION_YEAR + 1,
+            2100,
+        ],
+    )
     def test_validate_year_invalid(self, year):
         """Test validation of invalid years raises BookYearError."""
         with pytest.raises(BookYearError) as exc_info:
@@ -87,25 +99,30 @@ class TestValidationService:
 
     # === Required Field Validation Tests ===
 
-    @pytest.mark.parametrize("value,field", [
-        ("Valid Title", "title"),
-        ("Valid Author", "author"),
-        ("  Trimmed  ", "title"),  # Should be stripped
-    ])
+    @pytest.mark.parametrize(
+        "value,field",
+        [
+            ("Valid Title", "title"),
+            ("Valid Author", "author"),
+            ("  Trimmed  ", "title"),  # Should be stripped
+        ],
+    )
     def test_validate_required_field_valid(self, value, field):
         """Test validation of required fields with valid input."""
         result = self.service.validate_required_field(value, field)
         assert result == value.strip()
 
-    @pytest.mark.parametrize("value,field", [
-        ("", "title"),
-        ("   ", "author"),
-        (None, "title"),
-    ])
+    @pytest.mark.parametrize(
+        "value,field",
+        [
+            ("", "title"),
+            ("   ", "author"),
+            (None, "title"),
+        ],
+    )
     def test_validate_required_field_invalid(self, value, field):
         """Test validation of required fields with empty input."""
         with pytest.raises(BookValidationError) as exc_info:
             self.service.validate_required_field(value, field)
         assert "cannot be empty" in str(exc_info.value)
         assert field in str(exc_info.value)
-        

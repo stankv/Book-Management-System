@@ -22,4 +22,3 @@ class Action(ABC):
 
     def execute(self) -> ActionResult:
         return ActionResult()
-

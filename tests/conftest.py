@@ -1,11 +1,10 @@
 """Pytest configuration and fixtures for the Book Management System tests."""
 
-import json
 import pytest
 import shutil
 from pathlib import Path
-from uuid import UUID, uuid4
-from typing import Generator, Any, Dict, List
+from uuid import UUID
+from typing import Generator, Any
 
 from src.models.book import Book
 from src.storage.json_storage import JsonStorage
@@ -15,6 +14,7 @@ from src.settings import MIN_PUBLICATION_YEAR, MAX_PUBLICATION_YEAR
 
 
 # === Фикстуры для тестовых данных ===
+
 
 @pytest.fixture(scope="function")  # Changed from session to function for better isolation
 def test_data_dir() -> Generator[Path, None, None]:
@@ -70,6 +70,7 @@ def json_storage(json_test_file: Path) -> JsonStorage:
 
 # === Фикстуры для тестовых книг ===
 
+
 @pytest.fixture
 def sample_book_data() -> dict[str, Any]:
     """Provide sample book data.
@@ -81,7 +82,7 @@ def sample_book_data() -> dict[str, Any]:
         "title": "Clean Code",
         "author": "Robert C. Martin",
         "year": 2008,
-        "isbn": "9780132350884"
+        "isbn": "9780132350884",
     }
 
 
@@ -106,10 +107,7 @@ def another_sample_book() -> Book:
         Book: Another book instance with different data
     """
     return Book(
-        title="The Pragmatic Programmer",
-        author="David Thomas",
-        year=1999,
-        isbn="9780201616224"
+        title="The Pragmatic Programmer", author="David Thomas", year=1999, isbn="9780201616224"
     )
 
 
@@ -140,11 +138,14 @@ def multiple_books() -> list[Book]:
         Book(title="Book 2", author="Author 2", year=2001, isbn="9780000000002"),
         Book(title="Book 3", author="Author 1", year=2002, isbn="9780000000003"),
         Book(title="Python Book", author="Author 3", year=2003, isbn="9780000000004"),
-        Book(title="Clean Architecture", author="Robert C. Martin", year=2017, isbn="9780134494166"),
+        Book(
+            title="Clean Architecture", author="Robert C. Martin", year=2017, isbn="9780134494166"
+        ),
     ]
 
 
 # === Фикстуры для сервисов ===
+
 
 @pytest.fixture
 def entity_service(json_storage: JsonStorage) -> EntityService:
@@ -198,6 +199,7 @@ def validation_service() -> ValidationService:
 
 # === Фикстуры для тестирования действий (actions) ===
 
+
 @pytest.fixture
 def mock_action_result():
     """Create a mock action result for testing.
@@ -206,6 +208,7 @@ def mock_action_result():
         dict: Mock action result structure
     """
     from src.actions.base_action import ActionResult
+
     return ActionResult
 
 
@@ -241,11 +244,12 @@ def mock_io(monkeypatch):
         "inputs": inputs,
         "outputs": outputs,
         "add_input": lambda x: inputs.append(x),
-        "clear": lambda: (inputs.clear(), outputs.clear())
+        "clear": lambda: (inputs.clear(), outputs.clear()),
     }
 
 
 # === Фикстуры для тестирования граничных значений ===
+
 
 @pytest.fixture
 def valid_years() -> list[int]:
@@ -301,6 +305,7 @@ def invalid_isbns() -> list[str]:
 
 # === Фикстуры для создания временных файлов ===
 
+
 @pytest.fixture
 def temp_json_file(tmp_path: Path) -> Path:
     """Create a temporary JSON file path.
@@ -329,6 +334,7 @@ def corrupted_json_file(temp_json_file: Path) -> Path:
 
 
 # === Фикстуры для тестирования исключений ===
+
 
 @pytest.fixture
 def expected_exception_messages() -> dict[str, str]:

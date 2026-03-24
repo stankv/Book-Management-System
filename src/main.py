@@ -23,5 +23,6 @@ def main():
     manager = BookManager(data_dir=data_dir)
     manager.run()
 
+
 if __name__ == "__main__":
     main()

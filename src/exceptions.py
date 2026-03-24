@@ -207,7 +207,11 @@ class BookYearError(BookValidationError):
             year: The invalid year value
             message: Custom error message"""
         if not message:
-            message = f"Incorrect year of publication: {year}" if year else "Incorrect year of publication"
+            message = (
+                f"Incorrect year of publication: {year}"
+                if year
+                else "Incorrect year of publication"
+            )
         super().__init__("year", message)
 
 
@@ -244,5 +248,7 @@ class InvalidChoiceError(UserInputError):
             choice: The invalid choice that was entered
             message: Custom error message"""
         if not message:
-            message = f"Incorrect selection: {choice}" if choice else "Incorrect selection of menu item"
+            message = (
+                f"Incorrect selection: {choice}" if choice else "Incorrect selection of menu item"
+            )
         super().__init__(message)

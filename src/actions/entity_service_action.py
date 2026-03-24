@@ -17,7 +17,11 @@ class EntityServiceAction(Action, ABC):
         not_editable_fields: Class-level set of field names that cannot be
                             edited by the user (e.g., 'id')."""
 
-    not_editable_fields: ClassVar[frozenset[str]] = frozenset({"id",},)
+    not_editable_fields: ClassVar[frozenset[str]] = frozenset(
+        {
+            "id",
+        },
+    )
     """Set of field names that should not be editable by users.
     
     These fields are automatically excluded from operations that modify
@@ -47,7 +51,8 @@ class EntityServiceAction(Action, ABC):
 
         Returns:
             list[str]: Names of fields that users can modify."""
-        return [name
+        return [
+            name
             for name in self.service.entity_type.__dataclass_fields__
             if name not in self.not_editable_fields
         ]

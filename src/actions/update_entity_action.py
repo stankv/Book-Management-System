@@ -42,8 +42,9 @@ class UpdateEntityAction(SearchEntityAction):
 
         return f"Find and update a {self.entity_name}"
 
-    def _get_field_value(self, field_name: str, current_value, field_type: type, is_required: bool = False) -> tuple[
-        bool, any]:
+    def _get_field_value(
+        self, field_name: str, current_value, field_type: type, is_required: bool = False
+    ) -> tuple[bool, any]:
         """
         Prompt user for a new field value with error handling.
 
@@ -74,12 +75,12 @@ class UpdateEntityAction(SearchEntityAction):
                 return False, current_value
 
             # Allow user to cancel
-            if user_input.lower() == 'cancel':
+            if user_input.lower() == "cancel":
                 raise ActionCancelledError("Update cancelled")
 
             # Type conversion and validation
             try:
-                if field_type == int:
+                if field_type is int:
                     new_value = int(user_input)
                     # Additional validation for year
                     if field_name == "year":
@@ -87,9 +88,9 @@ class UpdateEntityAction(SearchEntityAction):
 
                 elif field_type == UUID:
                     new_value = UUID(user_input)
-                elif field_type == bool:
-                    new_value = user_input.lower() in ('true', 'yes', '1', 'y', 'да')
-                elif field_type == float:
+                elif field_type is bool:
+                    new_value = user_input.lower() in ("true", "yes", "1", "y", "да")
+                elif field_type is float:
                     new_value = float(user_input)
                 else:  # str and others
                     # Additional validation for ISBN
@@ -98,15 +99,12 @@ class UpdateEntityAction(SearchEntityAction):
 
                     # Check required fields
                     if is_required and not user_input:
-                        raise BookValidationError(
-                            field_name,
-                            f"{field_name} cannot be empty"
-                        )
+                        raise BookValidationError(field_name, f"{field_name} cannot be empty")
                     new_value = user_input
 
                 return True, new_value
 
-            except ValueError as e:
+            except ValueError:
                 print(f"✗ Invalid format for {field_name}. Expected {field_type.__name__}")
                 return False, current_value
 
@@ -162,12 +160,14 @@ class UpdateEntityAction(SearchEntityAction):
                 print(f"{idx}. [{entity.id}] {entity}")
 
             while True:
-                choice = input(f"\nSelect a {self.entity_name} to update (1-{len(results)}): ").strip()
+                choice = input(
+                    f"\nSelect a {self.entity_name} to update (1-{len(results)}): "
+                ).strip()
 
                 if not choice:
                     raise ActionCancelledError("Selection canceled")
 
-                if choice.lower() == 'cancel':
+                if choice.lower() == "cancel":
                     raise ActionCancelledError("Update cancelled")
 
                 if not choice.isdigit():
@@ -252,7 +252,9 @@ class UpdateEntityAction(SearchEntityAction):
             for field_name, field_type in editable_fields:
                 try:
                     current_value = getattr(entity_to_update, field_name)
-                    changed, new_value = self._get_field_value(field_name, current_value, field_type)
+                    changed, new_value = self._get_field_value(
+                        field_name, current_value, field_type
+                    )
 
                     if changed:
                         updates[field_name] = new_value
@@ -278,7 +280,7 @@ class UpdateEntityAction(SearchEntityAction):
 
             try:
                 confirm = input("\nApply changes? (y/n): ").strip().lower()
-                if confirm != 'y':
+                if confirm != "y":
                     print("ℹ️ Update cancelled")
                     return ActionResult()
             except KeyboardInterrupt:

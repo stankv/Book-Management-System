@@ -68,4 +68,3 @@ class TestBook:
         book = Book()
         assert isinstance(book, BaseEntity)
         assert hasattr(book, "id")
-        

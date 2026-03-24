@@ -1,8 +1,6 @@
 """Integration tests for BookManager with all components working together."""
 
 import pytest
-from pathlib import Path
-from uuid import UUID
 
 from src.managers.book_manager import BookManager
 from src.models.book import Book
@@ -49,7 +47,7 @@ class TestBookManagerIntegration:
             "Add Book items",
             "Update Book",
             "Delete Book",
-            "exit"
+            "exit",
         ]
 
         for expected in expected_names:
@@ -80,7 +78,9 @@ class TestBookManagerIntegration:
         assert len(books) == 1, f"Expected 1 book, got {len(books)}"
 
         # Проверяем, что данные правильные
-        assert books[0].title == "Clean Code", f"Expected title 'Clean Code', got '{books[0].title}'"
+        assert books[0].title == "Clean Code", (
+            f"Expected title 'Clean Code', got '{books[0].title}'"
+        )
 
     def test_list_books_through_manager(self, manager_with_books, mock_io):
         """Test listing books through the manager."""
@@ -168,7 +168,7 @@ class TestBookManagerIntegration:
     def test_full_manager_run_cycle_with_mock_input(self, book_manager, mock_io, monkeypatch):
         """Test a complete run cycle with multiple actions."""
         # Mock the menu display to avoid prints
-        monkeypatch.setattr(book_manager, '_display_menu', lambda: None)
+        monkeypatch.setattr(book_manager, "_display_menu", lambda: None)
 
         # Queue up actions: Add book -> List books -> Exit
         mock_io["add_input"]("3")  # Add
@@ -205,7 +205,7 @@ class TestBookManagerIntegration:
             return actions_executed
 
         # Replace run method temporarily
-        monkeypatch.setattr(book_manager, 'run', mock_run)
+        monkeypatch.setattr(book_manager, "run", mock_run)
 
         actions = book_manager.run()
 
@@ -220,7 +220,9 @@ class TestBookManagerIntegration:
         manager1 = BookManager(test_data_dir)
 
         # Add a book directly
-        book = Book(title="Persistent Book", author="Persistent Author", year=2023, isbn="9780000000001")
+        book = Book(
+            title="Persistent Book", author="Persistent Author", year=2023, isbn="9780000000001"
+        )
         manager1.books_service.add(book)
 
         # Create second manager instance (simulating restart)
@@ -248,17 +250,19 @@ class TestBookManagerIntegration:
         assert result.error is False  # Should recover, not crash
         assert len(book_manager.books_service.get_all()) == 1
         # Should have shown error message
-        assert any("year" in out.lower() and "between" in out.lower()
-                   for out in mock_io["outputs"])
+        assert any("year" in out.lower() and "between" in out.lower() for out in mock_io["outputs"])
 
-    @pytest.mark.parametrize("action_index,expected_type", [
-        ("1", "List Book items"),
-        ("2", "Search Book"),
-        ("3", "Add Book items"),
-        ("4", "Update Book"),
-        ("5", "Delete Book"),
-        ("6", "exit"),
-    ])
+    @pytest.mark.parametrize(
+        "action_index,expected_type",
+        [
+            ("1", "List Book items"),
+            ("2", "Search Book"),
+            ("3", "Add Book items"),
+            ("4", "Update Book"),
+            ("5", "Delete Book"),
+            ("6", "exit"),
+        ],
+    )
     def test_menu_selection_by_number(self, book_manager, action_index, expected_type):
         """Test that menu selection by number works correctly."""
         # This tests the menu selection logic without executing
@@ -268,14 +272,17 @@ class TestBookManagerIntegration:
                 action = list(book_manager.prepared_actions.values())[idx]
                 assert action.get_name() == expected_type
 
-    @pytest.mark.parametrize("action_name,expected_type", [
-        ("List Book items", "List Book items"),
-        ("Search Book", "Search Book"),
-        ("Add Book items", "Add Book items"),
-        ("Update Book", "Update Book"),
-        ("Delete Book", "Delete Book"),
-        ("exit", "exit"),
-    ])
+    @pytest.mark.parametrize(
+        "action_name,expected_type",
+        [
+            ("List Book items", "List Book items"),
+            ("Search Book", "Search Book"),
+            ("Add Book items", "Add Book items"),
+            ("Update Book", "Update Book"),
+            ("Delete Book", "Delete Book"),
+            ("exit", "exit"),
+        ],
+    )
     def test_menu_selection_by_name(self, book_manager, action_name, expected_type):
         """Test that menu selection by action name works correctly."""
         action = book_manager.prepared_actions.get(action_name)
@@ -285,7 +292,7 @@ class TestBookManagerIntegration:
     def test_invalid_menu_selection_handling(self, book_manager, mock_io, monkeypatch):
         """Test handling of invalid menu selections."""
         # Mock the menu display
-        monkeypatch.setattr(book_manager, '_display_menu', lambda: None)
+        monkeypatch.setattr(book_manager, "_display_menu", lambda: None)
 
         # Set running to False after one iteration
         book_manager.running = True
@@ -315,7 +322,7 @@ class TestBookManagerIntegration:
                 if choice == "6":
                     book_manager.running = False
 
-        monkeypatch.setattr(book_manager, 'run', mock_run)
+        monkeypatch.setattr(book_manager, "run", mock_run)
         book_manager.run()
 
         assert "Invalid choice number" in outputs

@@ -98,7 +98,6 @@ class BookManager(BaseManager):
         for idx, action in enumerate(self.prepared_actions.values(), start=1):
             print(f"{idx}. [{action.get_name()}] >> {action.get_description()}")
 
-
     def run(self):
         """Execute the main application loop.
 
