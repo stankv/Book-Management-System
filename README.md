@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![pytest](https://img.shields.io/badge/pytest-9.0.2-brightgreen.svg)](https://docs.pytest.org/)
-[![Coverage](https://img.shields.io/badge/покрытие-%3E80%25-brightgreen.svg)](https://coverage.readthedocs.io/)
+[![Coverage](https://img.shields.io/badge/coverage-%3E80%25-brightgreen.svg)](https://coverage.readthedocs.io/)
 [![Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://docs.astral.sh/ruff/)
-[![SOLID](https://img.shields.io/badge/SOLID-принципы-4c1.svg)](https://en.wikipedia.org/wiki/SOLID)
+[![SOLID](https://img.shields.io/badge/SOLID-compliant-4c1.svg)](https://en.wikipedia.org/wiki/SOLID)
 
 Мощная система управления коллекцией книг с консольным интерфейсом, 
 разработанная на Python с соблюдением принципов SOLID и использованием современных 
@@ -92,27 +92,76 @@
     ├── requirements.txt             # Зависимости
     └── README.md                    # Этот файл
 
+### Принципы SOLID
+
+Проект строго следует принципам SOLID, что обеспечивает высокую поддерживаемость и расширяемость:
+
+#### 1. **Принцип единственной ответственности (SRP, Single Responsibility Principle)**
+Каждый класс отвечает только за одну задачу:
+- `actions/` - только за действия пользователя (добавить, удалить, найти)
+- `managers/` - только за запуск и управление циклом приложения
+- `models/` - только за хранение данных
+- `services/` - управление сущностями (получение по id, добавление, удаление)
+- `storage/` - взаимодействие с БД (JSON-файл), загрузка и сохранение данных
+
+#### 2. **Принцип открытости-закрытости (OCP, Open/Close Principle)**
+- Добавление новых действий в Book Manager — это просто добавление новых классов в `actions/`
+- Логика работы самого менеджера не меняется при добавлении новых функций
+- Пример: добавление экспорта в CSV не требует изменения существующего кода
+
+#### 3. **Принцип подстановки Барбары Лисков (LSP, Liskov Substitution Principle)**
+- Наследники (`AddEntityAction`, наследующий от `EntityServiceAction`, который в свою очередь наследуется от `Action`) могут использоваться везде, где ожидается базовый класс
+- `UpdateEntityAction` наследует `SearchEntityAction` и корректно работает как `Action`
+
+#### 4. **Принцип разделения интерфейсов (ISP, Interface Segregation Principle)**
+- `JsonStorage` отвечает только за хранение, не смешивается с бизнес-логикой
+- `EntityService` работает с кэшем, а не напрямую с БД
+- Четкое разделение ответственности предотвращает появление "толстых" интерфейсов
+
+#### 5. **Принцип инверсии зависимостей (DIP, Dependency Inversion Principle)**
+- `EntityService` зависит от абстракции `BaseStorage`, а не от конкретной реализации `JsonStorage`
+- `BookManager` зависит от абстракций действий, а не от конкретных классов
+- Модули верхнего уровня не зависят от модулей нижнего уровня
+
+### Использованные паттерны проектирования
+
+| Паттерн              | Реализация | Преимущества |
+|----------------------|------------|--------------|
+| **Command Pattern**  | Классы `Action` (Add, Delete, Search, Update) | Каждая операция инкапсулирована в отдельном классе, легко добавлять новые команды |
+| **Template Method**  | Базовый класс `EntityServiceAction` | Общая структура действий определена, подклассы реализуют специфику |
+| **Strategy Pattern**        | `ValidationService` | Разные стратегии валидации для разных типов полей |
+| **Factory Pattern**          | Создание действий в `BookManager` | Централизованное создание экземпляров действий |
+| **Lazy Loading** | Свойство `EntityService.entities` | Данные загружаются только при необходимости, ускоряет запуск |
+| **Repository Pattern**      | `EntityService` с `JsonStorage` | Абстрагирует логику доступа к данным от бизнес-логики |
 
 
-## Код проекта разрабатывался с соблюдением принципов SOLID:
+### Иерархия исключений
 
-1. Принцип единственной ответственности (SRP, Single Responsibility Principle) - Все классы проекта отвечают за что-то одно:
-    - actions - только за действия (добавить, удалить и т.д.)
-    - managers - только для запуска
-    - models - только для хранения данных
-    - servicies - занимается управлением сущностями (получение по id, добавление, удаление и т.д.)
-    - storage - взаимодействие с БД (json-файл), т.е. загрузка и сохранение данных
-2. Принцип открытости-закрытости (OCP, Open/Close Principle) - добавление новых действий для Book Manager это просто добавление новых actions (снаружи), логика работы самого менеджера не меняется.
-3. Принцип подстановки Барбары Лисков (LSP, Liskov Substitution Principle) - наследники (например AddEntityAction, наследуемый от EntityServiceAction, который в свою очередь наследуется от Action) подходят там же, где подходит базовый класс.
-4. Принцип разделения интерфейсов (ISP, Interface Segregation Principle) - в Book Manager не объединяются вместе JsonStorage и EntityService, они разделены, это разные классы. 
-JsonStorage взаимодействует с БД, а EntityService не работает с БД напрямую, а работает только с кэшем. 
-5. Принцип инверсии зависимостей (DIP, Dependency Inversion Principle) - абстрактный класс BaseService, от которого наследуется EntityService, ничего в себя не принимает.
-EntityService ожидает BaseStorage (абстрактный класс), но сам BaseStorage никого не ждет. 
-Затем в  EntityService "прокидывается" JsonStorage. Т.о. реализации зависят от абстракций, а не абстракции от реализаций.
+Приложение использует разветвленную иерархию исключений для точной обработки ошибок:
 
-## Документация классов, методов и функций
+    BookManagementError
+    ├── StorageError
+    │   ├── StorageReadError
+    │   │   └── StorageCorruptedError
+    │   └── StorageWriteError
+    ├── EntityError
+    │   ├── EntityNotFoundError
+    │   ├── EntityAlreadyExistsError
+    │   └── EntityValidationError
+    │       ├── BookValidationError
+    │       │   ├── BookISBNError
+    │       │   └── BookYearError
+    ├── BookError
+    │   ├── BookNotFoundError
+    │   ├── BookAlreadyExistsError
+    │   └── BookValidationError (множественное наследование)
+    └── UserInputError
+        ├── ActionCancelledError
+        └── InvalidChoiceError
 
-Все файлы проекта имеют полную документацию в формате docstring. Документация включает:
+### Документация классов, методов и функций
+
+Все файлы проекта имеют полную документацию в формате **docstring**. Документация включает:
 
 * Описание назначения каждого класса
 * Описание всех методов с их параметрами и возвращаемыми значениями
@@ -120,7 +169,31 @@ EntityService ожидает BaseStorage (абстрактный класс), н
 * Примеры где это уместно
 * Документирование атрибутов классов
 
-Это значительно улучшает читаемость кода и помогает другим разработчикам быстро понять структуру и назначение каждого компонента системы.
+Это значительно улучшает читаемость кода и помогает быстро понять структуру и назначение каждого компонента системы.
+
+## 🚀 Быстрый старт
+
+```bash
+   # Клонирование репозитория
+   git clone https://github.com/stankv/Book-Management-System.git
+   cd Book-Management-System
+   
+   # Создание и активация виртуального окружения
+   python3 -m venv venv
+   source venv/bin/activate  # На Windows: venv\Scripts\activate
+   
+   # Установка зависимостей
+   pip3 install -r requirements.txt
+   
+   # Запуск приложения
+   python -m src.main
+   ````
+Для демонстрации работы приложения в каталоге demo/ находится файл demo_data.py, при 
+запуске которого создается каталог **src/data** с файлом **books.json** с тестовыми данными. 
+```bash
+ python -m demo.demo_data    # создание файла с данными (книгами)
+  python -m src.main         # запуск приложения
+```
 
 ## Тестирование
 
@@ -134,15 +207,15 @@ EntityService ожидает BaseStorage (абстрактный класс), н
     tests/
     ├── conftest.py                          # Общие фикстуры
     ├── unit_tests/                          # Модульные тесты
-    │   ├── test_models.py                   # Модели данных (BaseEntity, Book)
-    │   ├── test_exceptions.py               # Иерархия исключений
-    │   ├── test_validation_service.py       # Валидация ISBN, года, полей
-    │   ├── test_json_storage.py             # JSON хранилище
-    │   ├── test_entity_service.py           # CRUD операции
-    │   └── test_actions.py                  # Действия пользователя
+    │   ├── test_models.py                     # Модели данных (BaseEntity, Book)
+    │   ├── test_exceptions.py                 # Иерархия исключений
+    │   ├── test_validation_service.py         # Валидация ISBN, года, полей
+    │   ├── test_json_storage.py               # JSON хранилище
+    │   ├── test_entity_service.py             # CRUD операции
+    │   └── test_actions.py                    # Действия пользователя
     └── integration_tests/                   # Интеграционные тесты
-        ├── test_storage_integration.py      # Работа с файловой системой
-        └── test_book_manager_integration.py # Полный цикл работы приложения
+        ├── test_storage_integration.py        # Работа с файловой системой
+        └── test_book_manager_integration.py   # Полный цикл работы приложения
 
 ### ✅ Что тестируется:
 
@@ -163,16 +236,61 @@ EntityService ожидает BaseStorage (абстрактный класс), н
 
 ### 🚀 Запуск тестов:
 ```bash
-pytest -v                    # Подробный вывод
-pytest --cov=src --cov-report=html  # Отчет о покрытии (создастся каталог html)
-```
-### 📈 Покрытие кода:
-```bash
+# Запуск всех тестов с подробным выводом
+pytest -v
+
+# Запуск с подробным выводом и остановкой при первой ошибке
+pytest -v -x
+
+# Запуск определенных категорий
+pytest -m unit        # Только модульные тесты
+pytest -m integration # Только интеграционные тесты
+
+# Запуск с отчетом о покрытии
 pytest --cov=src --cov-report=html --cov-report=term
-```
-либо с использованием **coverage**:
-```bash
+
+# либо с использованием coverage
 coverage run -m pytest   
 coverage report -m 
 ```
+## 🔄 Расширение проекта
+
+Архитектура проекта позволяет легко добавлять новые возможности.
+
+### Добавление нового действия
+
+    # 1. Создайте новый класс действия
+    class ExportCSVAction(EntityServiceAction):
+        def get_name(self) -> str:
+            return "Export to CSV"
+        
+        def get_description(self) -> str:
+            return "Export all books to CSV file"
+        
+        def execute(self) -> ActionResult:
+            # Реализация экспорта
+            pass
+    
+    # 2. Добавьте в кортеж actions в BookManager
+    actions: ClassVar[tuple[type[Action], ...]] = (
+        ListEntitiesAction,
+        SearchEntityAction,
+        AddEntityAction,
+        UpdateEntityAction,
+        DeleteEntityAction,
+        ExportCSVAction,  # Новое действие
+        ExitAction,
+    )
+
+    # 3. Добавьте в src/actions/__init__.py импорт нового действия
+
+### Добавление нового типа сущностей
+
+1. Создайте новую модель, наследующую BaseEntity
+2. Создайте сервис, используя EntityService
+3. Создайте менеджер, наследующий BaseManager
+4. Добавьте действия для нового типа сущностей
+
+---
+Создано с ❤️ на Python с использованием принципов SOLID
 
